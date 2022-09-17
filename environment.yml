@@ -12,7 +12,7 @@ dependencies:
   - pip:
     - albumentations==0.4.3
     - diffusers
-    - opencv-python==4.1.2.30
+    - opencv-python>=4.3.0.38
     - pudb==2019.2
     - invisible-watermark
     - imageio==2.9.0
@@ -28,6 +28,7 @@ dependencies:
     - kornia==0.6
     - -e git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
     - -e git+https://github.com/openai/CLIP.git@main#egg=clip
+    - -e git+https://github.com/ScrollRack/Real-ESRGAN.git@main#egg=realesrgan
     - -e .
     - flask==2.1.3
     - python-datauri==1.1.0
