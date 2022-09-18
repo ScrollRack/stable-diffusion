@@ -1,9 +1,10 @@
+import os, sys
 import redis
 import time
 import json
 from txt2img import generate as generate_image
+from upscaler import upscale
 from dotenv import load_dotenv
-import os
 from os.path import join, dirname
 from dotenv import load_dotenv
 import requests
@@ -37,16 +38,41 @@ def create_image(prompt, args):
         )
 
         requests.post(webhook, json={ 'images': images, 'time': time, 'job_id': args.get('job_id') })
+        pass
+    except Exception as e:
+        print(e)
+
+def upscale_image(args):
+    """Upscales image and upload to S3"""
+    webhook = args.get('webhook_url')
+    image_url = args.get('image_url')
+    scale = args.get('scale', 4)
+
+    if not webhook:
+        return
+
+    try:
+        file_url = upscale(image_url, outscale=scale)
+
+        if (file_url):
+            requests.post(webhook, json={ 'file_url': file_url, 'job_id': args.get('job_id') })
+        else:
+            requests.post(webhook, json={ 'error': 'unable to upscale image', 'job_id': args.get('job_id') })
+
     except Exception as e:
         print(e)
 
 
 while True:
-    data = r.lpop('generate_images')
+    t2i_payload = r.lpop('generate_images')
+    upscale_payload = r.lpop('upscale_images')
 
-    if data:
-        data = json.loads(data)
+    if t2i_payload:
+        data = json.loads(t2i_payload)
         create_image(data['prompt'], data)
+
+    if upscale_payload:
+        data = json.loads(upscale_payload)
+        upscale_image(data)
     
     time.sleep(0.25)
-

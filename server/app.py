@@ -20,7 +20,6 @@ r = redis.Redis(
     ssl=False
 )
 
-
 def verify_api_key():
     """Verify that the API key is valid"""
     if request.headers.get('X-API-KEY') == os.environ.get('API_KEY'):
@@ -64,6 +63,31 @@ def generate():
         'job_id': job_id,
     })
 
+@app.route('/upscale', methods=['POST'])
+def upscale():
+    args = request.json
+    prompt = args.get('prompt', None)
+    webhook_url = request.headers.get('X-WEBHOOK-URL', None)
+    job_id = uuid.uuid4().hex
+
+    if not webhook_url:
+        return jsonify({'error': 'No webhook URL provided'}), 400
+
+    if not verify_api_key():
+        return jsonify({'error': 'Invalid API key'}), 401
+
+    params = {
+        'job_id': job_id,
+        'image_url': args.get('image_url', None),
+        'webhook_url': webhook_url,
+        'scale': args.get('scale', 4),
+    }
+
+    r.rpush('upscale_images', json.dumps(obj=params))
+    
+    return jsonify({
+        'job_id': job_id,
+    })
 
 @app.route('/webhook', methods=['POST'])
 def test_webhook():
