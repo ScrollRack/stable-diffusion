@@ -1,7 +1,6 @@
 import argparse, os, sys, glob
 import cv2
 import torch
-import boto3
 import numpy as np
 from omegaconf import OmegaConf
 from PIL import Image
@@ -18,6 +17,7 @@ from uuid import uuid4
 from datauri import DataURI
 import base64
 from io import BytesIO
+from uploader import upload_to_s3
 
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
@@ -48,28 +48,6 @@ def numpy_to_pil(images):
     pil_images = [Image.fromarray(image) for image in images]
 
     return pil_images
-
-def upload_to_s3(filepath, filename, folder):
-    """Uploads image to s3 bucket"""
-    bucket = f"{os.environ.get('S3_BUCKET')}"
-
-    s3 = boto3.client(
-        service_name= 's3',
-        aws_access_key_id= os.environ.get('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key= os.environ.get('AWS_SECRET_ACCESS_KEY'),
-    )
-
-    s3.upload_file(
-        Filename=filepath,
-        Bucket=f"{os.environ.get('S3_BUCKET')}",
-        Key=filename, 
-        ExtraArgs={
-            'ContentType': 'image/png',
-        }
-    )
-
-    return f"https://{bucket}.s3.us-east-2.amazonaws.com/{filename}"
-
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
@@ -142,8 +120,7 @@ def generate(prompt, **kwargs):
     os.makedirs(outdir, exist_ok=True)
     outpath = outdir
 
-    print("Creating invisible watermark encoder (see https://github.com/ShieldMnt/invisible-watermark)...")
-    wm = "StableDiffusionV1"
+    wm = "Scrollrack"
     wm_encoder = WatermarkEncoder()
     wm_encoder.set_watermark('bytes', wm.encode('utf-8'))
 
@@ -201,7 +178,7 @@ def generate(prompt, **kwargs):
                             img = put_watermark(img, wm_encoder)
                             img.save(filepath)
 
-                            file_url = upload_to_s3(filepath, filename, 'samples')
+                            file_url = upload_to_s3(filepath, filename)
 
                             result = {
                                 'seed': seed,

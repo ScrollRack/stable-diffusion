@@ -7,6 +7,7 @@ import numpy as np
 from os.path import join, dirname
 from dotenv import load_dotenv
 from basicsr.archs.rrdbnet_arch import RRDBNet
+from uploader import upload_to_s3
 
 sys.path.append('src/realesrgan')
 
@@ -18,7 +19,6 @@ load_dotenv(dotenv_path)
 
 model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
 model_path = os.path.join('./' + os.environ.get('MODEL_PATH'))
-print(model_path)
 
 def upscale(
     image_url,
@@ -32,7 +32,14 @@ def upscale(
     netscale = 4
     input = image_url
 
-    print(f"Upscaling {input} to {outscale}x")
+    print(f"Upscaling {input} by {outscale}x")
+    data = requests.get(input)
+
+    if data.status_code != 200:
+        # TODO: Send error
+        print("Error: Image not found")
+        return None
+
     # restorer
     upsampler = RealESRGANer(
         scale=netscale,
@@ -47,11 +54,11 @@ def upscale(
     output_path = 'outputs/upscaled'
     os.makedirs(output_path, exist_ok=True)
 
-    data = requests.get(input)
     img = cv2.imdecode(np.frombuffer(data.content, np.uint8), cv2.IMREAD_UNCHANGED)
     img_mode = None
     img_name = input.split('/')[-1]
     save_path = os.path.join(output_path, f'{img_name}')
+    file_url = None
 
     try:
         output, _ = upsampler.enhance(img, outscale=outscale)
@@ -60,3 +67,11 @@ def upscale(
     else:
         cv2.imwrite(save_path, output)
         print("finished")
+    
+    try:
+        file_url = upload_to_s3(save_path, img_name)
+        print(f"Uploaded to {file_url}")
+    except Exception as error:
+        print('Error', error)
+
+    return file_url

@@ -79,6 +79,7 @@ def upscale():
     params = {
         'job_id': job_id,
         'image_url': args.get('image_url', None),
+        'webhook_url': webhook_url,
         'scale': args.get('scale', 4),
     }
 
