@@ -117,6 +117,7 @@ def generate(prompt, **kwargs):
     else:
         sampler = DDIMSampler(model)
 
+
     os.makedirs(outdir, exist_ok=True)
     outpath = outdir
 

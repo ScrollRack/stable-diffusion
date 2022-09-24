@@ -56,7 +56,7 @@ def upscale(
 
     img = cv2.imdecode(np.frombuffer(data.content, np.uint8), cv2.IMREAD_UNCHANGED)
     img_mode = None
-    img_name = input.split('/')[-1]
+    img_name = 'upscaled_' + input.split('/')[-1]
     save_path = os.path.join(output_path, f'{img_name}')
     file_url = None
 
