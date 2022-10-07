@@ -13,7 +13,7 @@ dotenv_path = join(dirname(__file__), '../.env')
 load_dotenv(dotenv_path)
 
 r = redis.Redis(
-    host= os.environ.get('REDIS_HOST', 'redis://localhost'),
+    host= os.environ.get('REDIS_HOST', 'localhost'),
     port= os.environ.get('REDIS_PORT', '6379'),
     password= os.environ.get('REDIS_PASSWORD'),
     ssl=False
@@ -52,7 +52,7 @@ def upscale_image(args):
         return
 
     try:
-        file_url = upscale(image_url, outscale=scale)
+        file_url = upscale(image_url, factor=scale)
 
         if (file_url):
             requests.post(webhook, json={ 'file_url': file_url, 'job_id': args.get('job_id') })

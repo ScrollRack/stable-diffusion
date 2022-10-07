@@ -14,7 +14,7 @@ load_dotenv(dotenv_path)
 app = Flask(__name__)
 
 r = redis.Redis(
-    host= os.environ.get('REDIS_HOST', 'redis://localhost'),
+    host= os.environ.get('REDIS_HOST', 'localhost'),
     port= os.environ.get('REDIS_PORT', '6379'),
     password= os.environ.get('REDIS_PASSWORD'),
     ssl=False

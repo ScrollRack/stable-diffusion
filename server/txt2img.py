@@ -18,6 +18,7 @@ from datauri import DataURI
 import base64
 from io import BytesIO
 from uploader import upload_to_s3
+from upsample import upscale
 
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
@@ -92,9 +93,6 @@ def generate(prompt, **kwargs):
     steps = kwargs.get('steps', 30)
     iterations = kwargs.get('iterations', 1)
     scale = kwargs.get('scale', 7.5)
-
-    print(prompt)
-
     outdir = 'outputs\samples'
     factor = 8 # downsampling factor
     channels = 4
@@ -173,12 +171,10 @@ def generate(prompt, **kwargs):
 
                         for x_sample in x_image_torch:
                             x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                            filename = f"{base_count}_{seed}_{uuid4().hex}.png"
+                            filename = f"{base_count}_{seed}_{uuid4().hex}.jpeg"
                             filepath = os.path.join(sample_path, filename) 
-                            img = Image.fromarray(x_sample.astype(np.uint8))
-                            img = put_watermark(img, wm_encoder)
-                            img.save(filepath)
-
+                            output = upscale(data=x_sample, factor=2)
+                            cv2.imwrite(filepath, output)
                             file_url = upload_to_s3(filepath, filename)
 
                             result = {
