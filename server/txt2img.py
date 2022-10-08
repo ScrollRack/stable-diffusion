@@ -65,8 +65,6 @@ def load_model_from_config(config, ckpt, verbose=False):
         print("unexpected keys:")
         print(u)
 
-    model.cuda()
-    model.eval()
     return model
 
 def check_safety(x_image):
@@ -82,6 +80,7 @@ config = OmegaConf.load(f"{config}")
 model = load_model_from_config(config, f"{ckpt}")
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 model = model.to(device)
+model.eval()
 
 
 def generate(prompt, **kwargs):
