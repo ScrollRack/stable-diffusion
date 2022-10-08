@@ -27,7 +27,7 @@ def create_image(prompt, args):
         return
         
     try:
-        images, time = generate_image(
+        images, time, nsfw = generate_image(
             prompt = prompt,
             seed = args.get('seed', 0),
             width = args.get('width', 512),
@@ -37,7 +37,10 @@ def create_image(prompt, args):
             scale = args.get('scale', 7.5),
         )
 
-        requests.post(webhook, json={ 'images': images, 'time': time, 'job_id': args.get('job_id') })
+        requests.post(webhook, json={
+            "images": images, "nsfw": nsfw, "time": time, "job_id": args.get('job_id')
+        })
+
         pass
     except Exception as e:
         print(e)

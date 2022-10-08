@@ -69,13 +69,11 @@ def load_model_from_config(config, ckpt, verbose=False):
     model.eval()
     return model
 
+def check_safety(x_image):
+    safety_checker_input = safety_feature_extractor(numpy_to_pil(x_image), return_tensors="pt")
+    _, has_nsfw_concept = safety_checker(images=x_image, clip_input=safety_checker_input.pixel_values)
 
-def put_watermark(img, wm_encoder=None):
-    if wm_encoder is not None:
-        img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        img = wm_encoder.encode(img, 'dwtDct')
-        img = Image.fromarray(img[:, :, ::-1])
-    return img
+    return has_nsfw_concept
 
 
 ckpt = "models/ldm/stable-diffusion-v1/model.ckpt"
@@ -175,7 +173,6 @@ def generate(prompt, **kwargs):
                             filepath = os.path.join(sample_path, filename) 
                             output = upscale(data=x_sample, factor=2)
                             img = Image.fromarray(output)
-                            img = put_watermark(img, wm_encoder)
                             img.save(filepath)
 
                             file_url = upload_to_s3(filepath, filename)
@@ -189,5 +186,6 @@ def generate(prompt, **kwargs):
                             base_count += 1
                             seed += 1
 
-                toc = time.time()
-    return results, time.time() - timer
+                        has_nsfw_concept = check_safety(x_samples_ddim)
+
+    return results, time.time() - timer, has_nsfw_concept
