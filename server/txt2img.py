@@ -174,7 +174,10 @@ def generate(prompt, **kwargs):
                             filename = f"{base_count}_{seed}_{uuid4().hex}.jpeg"
                             filepath = os.path.join(sample_path, filename) 
                             output = upscale(data=x_sample, factor=2)
-                            cv2.imwrite(filepath, output)
+                            img = Image.fromarray(output)
+                            img = put_watermark(img, wm_encoder)
+                            img.save(filepath)
+
                             file_url = upload_to_s3(filepath, filename)
 
                             result = {
